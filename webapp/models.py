@@ -1,8 +1,10 @@
 from flask.ext.sqlalchemy import SQLAlchemy
+#from flask.ext.mongoengine import MongoEngine
 from flask_login import AnonymousUserMixin
 from webapp.extensions import bcrypt
 
 db = SQLAlchemy()
+#mongodb = MongoEngine()
 
 tags = db.Table(
     'post_tags',
@@ -26,6 +28,9 @@ class User(db.Model):
 
     def __init__(self, username):
         self.username = username
+
+        default = Role.query.filter_by(name="default").one()
+        self.roles.append(default)
 
     def __repr__(self):
         return '<User {}>'.format(self.username)

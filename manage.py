@@ -15,7 +15,7 @@ migrate = Migrate(app, db)
 
 manager = Manager(app)
 manager.add_command("server", Server())
-manager.add_command("show-urls", ShowUrls())
+#manager.add_command("show-urls", ShowUrls())
 manager.add_command('db', MigrateCommand)
 
 

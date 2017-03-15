@@ -2,11 +2,12 @@ import datetime
 from sqlalchemy import func
 from flask import render_template, Blueprint,redirect,url_for,abort
 from webapp.extensions import poster_permission,admin_permission
-from webapp.forms import CommentForm,PostForm
+
 from flask_login import login_required,current_user
 from flask_principal import Permission,UserNeed
+
 from webapp.models import db, Post, Tag, Comment, User, tags
-from webapp.forms import CommentForm
+from webapp.forms import CommentForm,PostForm
 
 blog_blueprint = Blueprint(
     'blog',
@@ -71,6 +72,25 @@ def post(post_id):
 @blog_blueprint.route('/new',methods=['GET','post'])
 @login_required
 @poster_permission.require(http_exception=403)
+def new_post():
+    form = PostForm()
+
+    if form.validate_on_submit():
+        new_post = Post(form.title.data)
+        new_post.text = form.text.data
+        new_post.publish_date = datetime.datetime.now()
+        new_post.user = User.query.filter_by(
+            username=current_user.username
+        ).one()
+
+        db.session.add(new_post)
+        db.session.commit()
+
+    return render_template('new.html', form=form)
+
+@blog_blueprint.route('/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+@poster_permission.require(http_exception=403)
 def edit_post(id):
     post = Post.query.get_or_404(id)
 
@@ -105,21 +125,6 @@ def tag(tag_name):
     return render_template(
         'tag.html',
         tag=tag,
-        posts=posts,
-        recent=recent,
-        top_tags=top_tags
-    )
-
-
-@blog_blueprint.route('/user/<string:username>')
-def user(username):
-    user = User.query.filter_by(username=username).first_or_404()
-    posts = user.posts.order_by(Post.publish_date.desc()).all()
-    recent, top_tags = sidebar_data()
-
-    return render_template(
-        'user.html',
-        user=user,
         posts=posts,
         recent=recent,
         top_tags=top_tags
